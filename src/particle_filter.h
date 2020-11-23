@@ -25,7 +25,7 @@ struct Particle {
 };
 
 
-class ParticleFilter {  
+class ParticleFilter {
  public:
   // Constructor
   // @param num_particles Number of particles
@@ -95,6 +95,10 @@ class ParticleFilter {
                        const std::vector<double>& sense_x, 
                        const std::vector<double>& sense_y);
 
+
+  double multivar_prob(double std_x, double std_y, double x_obs,
+                       double y_obs, double mu_x, double mu_y);
+
   /**
    * initialized Returns whether particle filter is initialized yet or not.
    */
@@ -113,13 +117,13 @@ class ParticleFilter {
 
  private:
   // Number of particles to draw
-  int num_particles; 
-  
+  int num_particles;
+
   // Flag, if filter is initialized
   bool is_initialized;
-  
+
   // Vector of weights of all particles
-  std::vector<double> weights; 
+  std::vector<double> weights;
 };
 
 #endif  // PARTICLE_FILTER_H_
