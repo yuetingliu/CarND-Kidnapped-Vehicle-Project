@@ -33,10 +33,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    *   (and others in this file).
    */
   // Set the number of particles
-  num_particles = 100;
+  num_particles = 1000;
   weights.assign(num_particles, 1);
 
-  std::vector<Particle> particles (num_particles);
+  // std::vector<Particle> particles (num_particles);
 
   // random engine
   std::default_random_engine gen;
@@ -55,6 +55,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   std::vector<int> associations;
   std::vector<double> sense_x;
   std::vector<double> sense_y;
+  double weight = 1;
   for (int i=0; i<num_particles; ++i) {
 
       sample_x = dist_x(gen);
@@ -63,10 +64,10 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
       Particle p{
         i, sample_x, sample_y,
-        sample_theta, weights[i],
+        sample_theta, weight,
         associations, sense_x, sense_y
       };
-      particles[i] = p;
+      particles.push_back(p);
 
   }
   is_initialized = true;
@@ -95,21 +96,24 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
       // add Gaussian noise
       std::default_random_engine gen;
       // set standard deviations
-      double std_x, std_y, std_theta;
-      std_x = std_pos[0];
-      std_y = std_pos[1];
-      std_theta = std_pos[2];
+//      double std_x, std_y, std_theta;
+//      std_x = std_pos[0];
+//      std_y = std_pos[1];
+//      std_theta = std_pos[2];
 
-      // create a normal distribution for x, y, and theta
-      std::normal_distribution<double> dist_x(x_new, std_x);
-      std::normal_distribution<double> dist_y(y_new, std_y);
-      std::normal_distribution<double> dist_theta(theta_new, std_theta);
+//      // create a normal distribution for x, y, and theta
+//      std::normal_distribution<double> dist_x(x_new, std_x);
+//      std::normal_distribution<double> dist_y(y_new, std_y);
+//      std::normal_distribution<double> dist_theta(theta_new, std_theta);
 
       // update particle
-      p.x = dist_x(gen);
-      p.y = dist_y(gen);
-      p.theta = dist_theta(gen);
-      particles[i] = p;
+//      p.x = dist_x(gen);
+//      p.y = dist_y(gen);
+//      p.theta = dist_theta(gen);
+//      particles[i] = p;
+      particles[i].x = x_new;
+      particles[i].y = y_new;
+      particles[i].theta = theta_new;
   }
 }
 
@@ -150,8 +154,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         std::vector<int> p_associations;
         std::vector<double> p_sense_x, p_sense_y;
 
-        for (unsigned int i=0; i<observations.size(); i++) {
-            LandmarkObs land_obs = observations[i];
+        double new_weight = 1;
+        for (unsigned int j=0; j<observations.size(); j++) {
+            LandmarkObs land_obs = observations[j];
             double x_obs = land_obs.x;
             double y_obs = land_obs.y;
 
@@ -166,8 +171,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             double diff;
             double min_diff = sensor_range;  // initialize min diff
             Map::single_landmark_s asso_landmark, current_landmark;
-            for (int i=0; i<size_landmark; i++) {
-                current_landmark = map_landmarks.landmark_list[i];
+            for (int k=0; k<size_landmark; k++) {
+                current_landmark = map_landmarks.landmark_list[k];
                 float x_landmark = current_landmark.x_f;
                 float y_landmark = current_landmark.y_f;
                 diff = dist(x_landmark, y_landmark, x_map, y_map);
@@ -193,11 +198,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             double weight = multivar_prob(std_x, std_y, x_map, y_map,
                                           mu_x, mu_y);
 
-            p.weight = p.weight * weight;
-            weights[i] = weights[i] * weight;
+            new_weight *= weight;
         }
-        SetAssociations(p, p_associations, p_sense_x, p_sense_y);
-        particles[i] = p;
+        particles[i].weight = new_weight;
+        SetAssociations(particles[i], p_associations, p_sense_x, p_sense_y);
     }
 }
 
@@ -210,6 +214,11 @@ void ParticleFilter::resample() {
    */
 
     std::default_random_engine generator;
+    // update weights
+    for (int i; i<num_particles; i++) {
+        weights[i] = particles[i].weight;
+    }
+
     std::discrete_distribution <int> distribution (weights.begin(), weights.end());
 
     std::vector <Particle> new_particles (num_particles);
@@ -221,7 +230,7 @@ void ParticleFilter::resample() {
 }
 
 double ParticleFilter::multivar_prob(double std_x, double std_y, double x_obs,
-                     double y_obs, double mu_x, double mu_y) {
+                                     double y_obs, double mu_x, double mu_y) {
     // first part of gaussain
     double gauss_part1;
     gauss_part1 = 1 / (2 * M_PI * std_x * std_y);
