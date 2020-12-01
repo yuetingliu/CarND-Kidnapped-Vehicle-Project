@@ -109,17 +109,13 @@ int main() {
           }
 
           // Update the weights and resample
-          std::cout << "Now running updateWeights" << std::endl;
           pf.updateWeights(sensor_range, sigma_landmark, noisy_observations, map);
-          std::cout << "Now running resample" << std::endl;
           pf.resample();
 
-          std::cout << "Now running get average weigthed error" << std::endl;
           // Calculate and output the average weighted error of the particle 
           //   filter over all time steps so far.
           vector<Particle> particles = pf.particles;
           int num_particles = particles.size();
-          std::cout << "Number of particles: " << num_particles << std::endl;
           double highest_weight = -1.0;
           Particle best_particle;
           double weight_sum = 0.0;
@@ -135,9 +131,9 @@ int main() {
           if (highest_weight < 0) {
             std::cout << "Something wrong, exit" << std::endl;
             std::cout << "Weights" << std::endl;
-            for (int i=0; i<num_particles; i++) {
-              std::cout << "i " << i << " particle weight= " << particles[i].weight <<std::endl;
-            }
+//            for (int i=0; i<num_particles; i++) {
+//              std::cout << "i " << i << " particle weight= " << particles[i].weight <<std::endl;
+//            }
             exit (EXIT_FAILURE);
           }
           std::cout << "highest w " << highest_weight << std::endl;
